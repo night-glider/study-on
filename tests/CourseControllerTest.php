@@ -59,7 +59,7 @@ class CourseControllerTest extends AbstractTest
         $this->assertSame($crawler->filter('.course-description')->text(), $course->getDescription());
     }
 
-    public function testCourseWithEmptyCodeCreating(): void
+    public function testCourseFailedCreating(): void
     {
         // от списка курсов переходим на страницу создания курса
         $client = $this->getClient();
@@ -131,7 +131,7 @@ class CourseControllerTest extends AbstractTest
         $this->assertSame($crawler->filter('.course-description')->text(), 'Description course for test');
     }
 
-    public function testCourseWithEmptyCodeEditing(): void
+    public function testCourseFailedEditing(): void
     {
         // от списка курсов переходим на страницу создания курса
         $client = $this->getClient();
