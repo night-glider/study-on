@@ -17,10 +17,11 @@ class CourseType extends AbstractType
     {
         $builder
             ->add('code', TextType::class, [
-                'label' => 'Code',
-                'required' => true,
+                'label' => 'Код',
+                'required' => false,
+                'empty_data' => '',
                 'constraints' => [
-                    new NotBlank(null, 'code can not be blank'),
+                    new NotBlank(null, 'Код не может быть пустым'),
                     new Length(
                         null,
                         null,
@@ -29,15 +30,16 @@ class CourseType extends AbstractType
                         null,
                         null,
                         null,
-                        'code should be less than 255 characters'
+                        'Код должен быть короче 255 символов'
                     )
                 ]
             ])
             ->add('name', TextType::class, [
-                'label' => 'Name',
-                'required' => true,
+                'label' => 'Название',
+                'required' => false,
+                'empty_data' => '',
                 'constraints' => [
-                    new NotBlank(null, 'name can not be blank'),
+                    new NotBlank(null, 'Название не может быть пустым'),
                     new Length(
                         null,
                         null,
@@ -46,13 +48,14 @@ class CourseType extends AbstractType
                         null,
                         null,
                         null,
-                        'name should be less than 255 characters'
+                        'Название должно быть короче 255 символов'
                     )
                 ]
             ])
             ->add('description', TextareaType::class, [
-                'label' => 'Description',
+                'label' => 'Описание',
                 'required' => false,
+                'empty_data' => '',
                 'constraints' => [
                     new Length(
                         null,
@@ -62,7 +65,7 @@ class CourseType extends AbstractType
                         null,
                         null,
                         null,
-                        'description should be less than 1000 characters'
+                        'Описание должно быть короче 1000 символов'
                     )
                 ]
             ])

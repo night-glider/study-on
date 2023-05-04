@@ -23,8 +23,8 @@ final class Version20230425170638 extends AbstractMigration
         $this->addSql('CREATE SEQUENCE course_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE SEQUENCE lesson_id_seq INCREMENT BY 1 MINVALUE 1 START 1');
         $this->addSql('CREATE TABLE course (id INT NOT NULL, code VARCHAR(255) NOT NULL, name VARCHAR(255) NOT NULL, description VARCHAR(1000) DEFAULT NULL, PRIMARY KEY(id))');
-        $this->addSql('CREATE TABLE lesson (id INT NOT NULL, course_id_idz INT NOT NULL, name VARCHAR(255) NOT NULL, content TEXT NOT NULL, nindex INT NOT NULL, PRIMARY KEY(id))');
-        $this->addSql('CREATE INDEX IDX_F87474F396EF99BF ON lesson (course_id_id)');
+        $this->addSql('CREATE TABLE lesson (id INT NOT NULL, course_id INT NOT NULL, name VARCHAR(255) NOT NULL, content TEXT NOT NULL, nindex INT NOT NULL, PRIMARY KEY(id))');
+        $this->addSql('CREATE INDEX IDX_F87474F396EF99BF ON lesson (course_id)');
         $this->addSql('CREATE TABLE messenger_messages (id BIGSERIAL NOT NULL, body TEXT NOT NULL, headers TEXT NOT NULL, queue_name VARCHAR(190) NOT NULL, created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, available_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, delivered_at TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL, PRIMARY KEY(id))');
         $this->addSql('CREATE INDEX IDX_75EA56E0FB7336F0 ON messenger_messages (queue_name)');
         $this->addSql('CREATE INDEX IDX_75EA56E0E3BD61CE ON messenger_messages (available_at)');
@@ -37,7 +37,7 @@ final class Version20230425170638 extends AbstractMigration
         $$ LANGUAGE plpgsql;');
         $this->addSql('DROP TRIGGER IF EXISTS notify_trigger ON messenger_messages;');
         $this->addSql('CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON messenger_messages FOR EACH ROW EXECUTE PROCEDURE notify_messenger_messages();');
-        $this->addSql('ALTER TABLE lesson ADD CONSTRAINT FK_F87474F396EF99BF FOREIGN KEY (course_id_id) REFERENCES course (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('ALTER TABLE lesson ADD CONSTRAINT FK_F87474F396EF99BF FOREIGN KEY (course_id) REFERENCES course (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
     }
 
     public function down(Schema $schema): void

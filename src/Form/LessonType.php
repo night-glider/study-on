@@ -31,10 +31,11 @@ class LessonType extends AbstractType
     {
         $builder
             ->add('name', TextType::class, [
-                'label' => 'Name',
-                'required' => true,
+                'label' => 'Название',
+                'required' => false,
+                'empty_data' => '',
                 'constraints' => [
-                    new NotBlank(null, 'name can not be blank'),
+                    new NotBlank(null, 'Название не может быть пустым'),
                     new Length(
                         null,
                         null,
@@ -43,25 +44,28 @@ class LessonType extends AbstractType
                         null,
                         null,
                         null,
-                        'name should be less than 255 characters'
+                        'Название должно быть короче 255 символов'
                     )
-                ]
+                ],
+
             ])
             ->add('content', TextareaType::class, [
-                'label' => 'Content',
-                'required' => true,
+                'label' => 'Контент',
+                'required' => false,
+                'empty_data' => '',
                 'constraints' => [
-                    new NotBlank(null, 'content can not be blank'),
+                    new NotBlank(null, 'Контент не может быть пустым'),
                 ]
             ])
             ->add('nindex', IntegerType::class, [
-                'label' => 'Index',
-                'required' => true,
+                'label' => 'Индекс',
+                'required' => false,
+                'empty_data' => '',
                 'constraints' => [
-                    new NotBlank(null, 'index can not be blank'),
+                    new NotBlank(null, 'Индекс не может быть пустым'),
                     new Range(
                         null,
-                        'message should be between {{ min }} до {{ max }}',
+                        'Индекс должен быть в диапазоне от {{ min }} до {{ max }}',
                         null,
                         null,
                         null,

@@ -84,7 +84,7 @@ class Lesson
         return $this->nindex;
     }
 
-    public function setNindex(int $nindex): self
+    public function setNindex(?int $nindex): self
     {
         $this->nindex = $nindex;
 
