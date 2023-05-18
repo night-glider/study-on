@@ -4,6 +4,7 @@ namespace App\Tests;
 
 use App\Entity\Course;
 use App\Entity\Lesson;
+use App\Form\DataTransformer\CourseToString;
 use App\Tests\AbstractTest;
 use App\DataFixtures\AppFixtures;
 
@@ -26,60 +27,44 @@ class LessonControllerTest extends AbstractTest
 
     public function testSuccessfulLessonCreating(): void
     {
-        // от списка курсов переходим на страницу создания урока
         $client = $this->getClient();
-        $crawler = $client->request('GET', '/courses/');
-        $this->assertResponseOk();
+        $course = new Course();
+        $course->setName("test");
+        $course->setCode("test");
+        $course->setDescription("test");
+        $this->getEntityManager()->persist($course);
+        $this->getEntityManager()->flush();
 
-        $link = $crawler->filter('.course-link')->first()->link();
-        $crawler = $client->click($link);
+        $crawler = $client->request('GET', '/courses/' . $course->getId() . '/new/lesson/');
         $this->assertResponseOk();
-
-        // создание урока
-        $link = $crawler->selectLink('Добавить урок')->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
-
         $form = $crawler->selectButton("Далее")->form();
-        // сохраняем id курса
-        $courseId = $form['lesson[course]']->getValue();
 
-        // заполняем форму создания урока корректными данными и отправляем
-        $form['lesson[name]'] = 'New Last lesson';
+        $form['lesson[name]'] = 'new test lesson';
         $form['lesson[content]'] = 'Lesson content';
         $form['lesson[nindex]'] = '99';
         $client->submit($form);
 
         // проверяем редирект
         $crawler = $client->followRedirect();
-        $this->assertRouteSame('app_course_show', ['id' => $courseId]);
+        $this->assertRouteSame('app_course_show', ['id' => $course->getId()]);
         $this->assertResponseOk();
-
-        $this->assertResponseOk();
-        $this->assertSame($crawler->filter('.lesson-ref')->last()->text(), 'New Last lesson');
-
-        $crawler = $client->click($crawler->filter('.lesson-ref')->last()->link());
-        $this->assertResponseOk();
-
-        // проверим название и содержание
-        $this->assertSame($crawler->filter('.lesson-name')->first()->text(), 'New Last lesson');
-        $this->assertSame($crawler->filter('.lesson-content')->first()->text(), 'Lesson content');
+        $this->getEntityManager()->refresh($course);
+        $lesson = $course->getLessons()[0];
+        $this->assertSame("test", $lesson->getName());
+        $this->assertSame("test", $lesson->getCode());
+        $this->assertSame("test", $lesson->getDescription());
     }
 
     public function testLessonFailedCreating(): void
     {
-        // от списка курсов переходим на страницу создания урока
         $client = $this->getClient();
-        $crawler = $client->request('GET', '/courses/');
-        $this->assertResponseOk();
-
-        $link = $crawler->filter('.course-link')->first()->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
-
-        // создание урока
-        $link = $crawler->selectLink('Добавить урок')->link();
-        $crawler = $client->click($link);
+        $course = new Course();
+        $course->setName("test");
+        $course->setCode("test");
+        $course->setDescription("test");
+        $this->getEntityManager()->persist($course);
+        $this->getEntityManager()->flush();
+        $crawler = $client->request('GET', '/courses/' . $course->getId() . '/new/lesson/');
         $this->assertResponseOk();
 
         $fieldData = [
@@ -108,71 +93,65 @@ class LessonControllerTest extends AbstractTest
 
     public function testLessonSuccessfulEditing(): void
     {
-        // от списка курсов переходим на страницу редактирования курса
         $client = $this->getClient();
-        $crawler = $client->request('GET', '/courses/');
-        $this->assertResponseOk();
+        $course = new Course();
+        $course->setName("test");
+        $course->setCode("test");
+        $course->setDescription("test");
+        $this->getEntityManager()->persist($course);
 
-        $link = $crawler->filter('.course-link')->first()->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
+        $lesson = new Lesson();
+        $lesson->setCourse($course);
+        $lesson->setName("test name");
+        $lesson->setContent("test content");
+        $lesson->setNindex(99);
+        $this->getEntityManager()->persist($lesson);
 
-        $link = $crawler->filter('.lesson-ref')->first()->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
+        $this->getEntityManager()->flush();
 
-        $link = $crawler->selectLink('Редактировать')->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
 
+        $crawler = $client->request('GET', '/lessons/' . $lesson->getId() . '/edit');
+        $this->assertResponseOk();
         $form = $crawler->selectButton('Обновить')->form();
 
-        // сохраняем id курса
-        $courseId = $this->getEntityManager()
-            ->getRepository(Course::class)
-            ->findOneBy([
-                'id' => $form['lesson[course]']->getValue(),
-            ])->getId();
 
         // заполняем форму корректными данными
-        $form['lesson[nindex]'] = '99';
-        $form['lesson[name]'] = 'Test edit lesson';
-        $form['lesson[content]'] = 'Test edit lesson content';
+        $form['lesson[nindex]'] = 1;
+        $form['lesson[name]'] = "edited";
+        $form['lesson[content]'] = "edited";
         $client->submit($form);
 
         // проверяем редирект
-        $crawler = $client->followRedirect();
-        $this->assertRouteSame('app_course_show', ['id' => $courseId]);
+        $client->followRedirect();
+        $this->assertRouteSame('app_course_show', ['id' => $lesson->getCourse()->getId()]);
         $this->assertResponseOk();
 
-        // проверяем, что урок отредактирован
-        $this->assertSame($crawler->filter('.lesson-ref')->last()->text(), 'Test edit lesson');
-        $link = $crawler->filter('.lesson-ref')->last()->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
-
-        // проверим название и содержание
-        $this->assertSame($crawler->filter('.lesson-name')->first()->text(), 'Test edit lesson');
-        $this->assertSame($crawler->filter('.lesson-content')->first()->text(), 'Test edit lesson content');
+        #$this->getEntityManager()->refresh($lesson);
+        $lesson = $this->getEntityManager()->find(Lesson::class, $lesson->getId());
+        $this->assertSame(1, $lesson->getNindex());
+        $this->assertSame("edited", $lesson->getName());
+        $this->assertSame("edited", $lesson->getContent());
     }
 
     public function testLessonFailedEditing(): void
     {
-        // от списка курсов переходим на страницу редактирования курса
         $client = $this->getClient();
-        $crawler = $client->request('GET', '/courses/');
-        $this->assertResponseOk();
+        $course = new Course();
+        $course->setName("test");
+        $course->setCode("test");
+        $course->setDescription("test");
+        $this->getEntityManager()->persist($course);
 
-        $link = $crawler->filter('.course-link')->first()->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
+        $lesson = new Lesson();
+        $lesson->setCourse($course);
+        $lesson->setName("test name");
+        $lesson->setContent("test content");
+        $lesson->setNindex(99);
+        $this->getEntityManager()->persist($lesson);
 
-        $link = $crawler->filter('.lesson-ref')->first()->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
+        $this->getEntityManager()->flush();
 
-        $link = $crawler->selectLink('Редактировать')->link();
-        $crawler = $client->click($link);
+        $crawler = $client->request('GET', '/lessons/' . $lesson->getId() . '/edit');
         $this->assertResponseOk();
 
         $fieldData = [
@@ -201,27 +180,29 @@ class LessonControllerTest extends AbstractTest
 
     public function testLessonDeleting(): void
     {
-        // от списка курсов переходим на страницу просмотра курса
         $client = $this->getClient();
-        $crawler = $client->request('GET', '/courses/');
-        $this->assertResponseOk();
+        $course = new Course();
+        $course->setName("test");
+        $course->setCode("test");
+        $course->setDescription("test");
+        $this->getEntityManager()->persist($course);
 
-        // на детальную страницу курса
-        $link = $crawler->filter('.course-link')->first()->link();
-        $crawler = $client->click($link);
-        $this->assertResponseOk();
+        $lesson = new Lesson();
+        $lesson->setCourse($course);
+        $lesson->setName("test name");
+        $lesson->setContent("test content");
+        $lesson->setNindex(99);
+        $this->getEntityManager()->persist($lesson);
 
-        $countBeforeDeleting = $crawler->filter('.lesson-ref')->count();
+        $this->getEntityManager()->flush();
 
-        // переходим к деталям урока
-        $link = $crawler->filter('.lesson-ref')->first()->link();
-        $crawler = $client->click($link);
+        $crawler = $client->request('GET', '/lessons/' . $lesson->getId());
         $this->assertResponseOk();
 
         $client->submitForm('Удалить');
         $crawler = $client->followRedirect();
 
-        $this->assertCount($countBeforeDeleting - 1, $crawler->filter('.lesson-ref'));
+        $this->assertNull($this->getEntityManager()->find(Lesson::class, $lesson->getId()));
     }
 
     protected function getFixtures(): array
