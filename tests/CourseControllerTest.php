@@ -6,13 +6,54 @@ use App\Entity\Course;
 use App\Entity\Lesson;
 use App\Tests\AbstractTest;
 use App\DataFixtures\AppFixtures;
+use App\Tests\Mock\BillingMock;
 use Symfony\Component\HttpFoundation\Response;
 
 class CourseControllerTest extends AbstractTest
 {
+    public function urlProviderIsSuccessful(): \Generator
+    {
+        yield ['/'];
+        yield ['/courses/'];
+        yield ['/courses/new'];
+    }
+
+    /**
+     * @dataProvider urlProviderIsSuccessful
+     */
+    public function testPageIsSuccessful($url): void
+    {
+        $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
+        $client->request('GET', $url);
+        $this->assertResponseOk();
+    }
+
+
+    public function urlProviderNotFound(): \Generator
+    {
+        yield ['/not-found/'];
+        yield ['/courses/-1'];
+        yield ['/abvgd'];
+    }
+
+    /**
+     * @dataProvider urlProviderNotFound
+     */
+    public function testPageIsNotFound($url): void
+    {
+        $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
+        $this->assertResponseRedirect();
+    }
+
     public function testGetActionsResponseOk(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $crawler = $client->request('GET', '/courses/');
         $courses = $this->getEntityManager()->getRepository(Course::class)->findAll();
         foreach ($courses as $course) {
@@ -28,6 +69,8 @@ class CourseControllerTest extends AbstractTest
     public function testSuccessfulCourseCreating(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $crawler = $client->request('GET', '/courses/new');
         $this->assertResponseOk();
 
@@ -51,6 +94,8 @@ class CourseControllerTest extends AbstractTest
     public function testCourseFailedCreating(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $crawler = $client->request('GET', '/courses/new');
         $this->assertResponseOk();
 
@@ -81,7 +126,8 @@ class CourseControllerTest extends AbstractTest
     public function testCourseSuccessfulEditing(): void
     {
         $client = $this->getClient();
-        $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");
@@ -112,7 +158,8 @@ class CourseControllerTest extends AbstractTest
     public function testCourseFailedEditing(): void
     {
         $client = $this->getClient();
-        $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");
@@ -149,6 +196,8 @@ class CourseControllerTest extends AbstractTest
     public function testCourseDeleting(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");

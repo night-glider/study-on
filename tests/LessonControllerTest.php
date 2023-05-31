@@ -7,12 +7,15 @@ use App\Entity\Lesson;
 use App\Form\DataTransformer\CourseToString;
 use App\Tests\AbstractTest;
 use App\DataFixtures\AppFixtures;
+use App\Tests\Mock\BillingMock;
 
 class LessonControllerTest extends AbstractTest
 {
     public function testGetActionsResponseOk(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $lessons = $this->getEntityManager()->getRepository(Lesson::class)->findAll();
         foreach ($lessons as $lesson) {
             // детальная страница урока
@@ -28,6 +31,8 @@ class LessonControllerTest extends AbstractTest
     public function testSuccessfulLessonCreating(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");
@@ -58,6 +63,8 @@ class LessonControllerTest extends AbstractTest
     public function testLessonFailedCreating(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");
@@ -94,6 +101,8 @@ class LessonControllerTest extends AbstractTest
     public function testLessonSuccessfulEditing(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");
@@ -136,6 +145,8 @@ class LessonControllerTest extends AbstractTest
     public function testLessonFailedEditing(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");
@@ -181,6 +192,8 @@ class LessonControllerTest extends AbstractTest
     public function testLessonDeleting(): void
     {
         $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");

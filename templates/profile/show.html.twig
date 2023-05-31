@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block body %}
+    <h1>{{ user.getUsername() }}</h1>
+    {% for role in user.getRoles() %}
+        <p>{{ role }}</p>
+    {% endfor %}
+    {{ user.getBalance }}
+{% endblock %}
