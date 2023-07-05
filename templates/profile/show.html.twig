@@ -4,8 +4,14 @@
 
 {% block body %}
     <h1>{{ user.getUsername() }}</h1>
+    <p>Мои роли:
     {% for role in user.getRoles() %}
-        <p>{{ role }}</p>
+        {{ role }}
     {% endfor %}
-    {{ user.getBalance }}
+    </p>
+    Мой баланс: {{ user.getBalance }}
+    <br>
+    <a href="{{ path('app_profile_transactions') }}" class="btn btn-primary">
+        К транзакциям
+    </a>
 {% endblock %}

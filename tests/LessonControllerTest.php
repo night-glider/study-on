@@ -8,9 +8,20 @@ use App\Form\DataTransformer\CourseToString;
 use App\Tests\AbstractTest;
 use App\DataFixtures\AppFixtures;
 use App\Tests\Mock\BillingMock;
+use phpDocumentor\Reflection\Types\Void_;
 
 class LessonControllerTest extends AbstractTest
 {
+    public function testUnauthorizedAccess(): void
+    {
+        $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authClient($client, "user@gmail.com", "user");
+        $lesson = $this->getEntityManager()->getRepository(Lesson::class)->findAll()[0];
+        $client->request('GET', '/lessons/' . $lesson->getId());
+        $this->assertResponseCode(403);
+    }
+
     public function testGetActionsResponseOk(): void
     {
         $client = $this->getClient();
@@ -33,6 +44,7 @@ class LessonControllerTest extends AbstractTest
         $client = $this->getClient();
         $billingMock = new BillingMock();
         $billingMock->authAsAdmin($client);
+
         $course = new Course();
         $course->setName("test");
         $course->setCode("test");
@@ -40,7 +52,8 @@ class LessonControllerTest extends AbstractTest
         $this->getEntityManager()->persist($course);
         $this->getEntityManager()->flush();
 
-        $crawler = $client->request('GET', '/courses/' . $course->getId() . '/new/lesson/');
+        $client->request('GET', '/courses/' . $course->getId() . '/new/lesson/');
+        $crawler = $client->followRedirect();
         $this->assertResponseOk();
         $form = $crawler->selectButton("Далее")->form();
 
@@ -53,11 +66,12 @@ class LessonControllerTest extends AbstractTest
         $crawler = $client->followRedirect();
         $this->assertRouteSame('app_course_show', ['id' => $course->getId()]);
         $this->assertResponseOk();
-        $this->getEntityManager()->refresh($course);
+        $course = $this->getEntityManager()->getRepository(Course::class)->findOneBy([
+            'code' => 'test']);
         $lesson = $course->getLessons()[0];
-        $this->assertSame("test", $lesson->getName());
-        $this->assertSame("test", $lesson->getCode());
-        $this->assertSame("test", $lesson->getDescription());
+        $this->assertSame("new test lesson", $lesson->getName());
+        $this->assertSame(99, $lesson->getNindex());
+        $this->assertSame("Lesson content", $lesson->getContent());
     }
 
     public function testLessonFailedCreating(): void
@@ -71,7 +85,8 @@ class LessonControllerTest extends AbstractTest
         $course->setDescription("test");
         $this->getEntityManager()->persist($course);
         $this->getEntityManager()->flush();
-        $crawler = $client->request('GET', '/courses/' . $course->getId() . '/new/lesson/');
+        $client->request('GET', '/courses/' . $course->getId() . '/new/lesson/');
+        $crawler = $client->followRedirect();
         $this->assertResponseOk();
 
         $fieldData = [

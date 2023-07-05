@@ -10,6 +10,7 @@
             <tr>
                 <th>Название</th>
                 <th>Описание</th>
+                <th>Цена</th>
                 {% if is_granted('ROLE_SUPER_ADMIN') %}
                     <th>Действия</th>
                 {% endif %}
@@ -22,6 +23,7 @@
                     <a class="course-link" href="{{ path('app_course_show', {'id': course.id}) }}">{{ course.name }}</a>
                 </td>
                 <td>{{ course.description }}</td>
+                <td>{{ course.type }}</td>
                 {% if is_granted('ROLE_SUPER_ADMIN') %}
                     <td>
                         <a href="{{ path('app_course_show', {'id': course.id}) }}">Показ.</a>

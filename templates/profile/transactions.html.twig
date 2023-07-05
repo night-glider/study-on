@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Transactions{% endblock %}
+
+{% block body %}
+    <h3 style="display: flex">Транзакции: </h3>
+    <ol class="list-group list-group-numbered roles">
+        {% for transaction in transactions %}
+            <li class="list-group-item role">
+                {{ transaction.type }}
+                {{ transaction.value }}Р
+                {{ transaction.creationDate }}
+                {% if transaction.course is defined %}
+                {{ transaction.course}}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+{% endblock %}

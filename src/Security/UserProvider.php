@@ -2,6 +2,11 @@
 
 namespace App\Security;
 
+use App\Exception\BillingUnavailableException;
+use App\Service\BillingClient;
+use DateTime;
+use Symfony\Component\HttpFoundation\Exception\JsonException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -20,6 +25,13 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
      *
      * @throws UserNotFoundException if the user is not found
      */
+    private BillingClient $billingClient;
+
+    public function __construct(BillingClient $billingClient)
+    {
+        $this->billingClient = $billingClient;
+    }
+
     public function loadUserByIdentifier($identifier): UserInterface
     {
         // Load a User object from your data source or throw UserNotFoundException.
@@ -54,8 +66,28 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
             throw new UnsupportedUserException(sprintf('Invalid user class "%s".', get_class($user)));
         }
 
+
+
         // Return a User object after making sure its data is "fresh".
         // Or throw a UsernameNotFoundException if the user no longer exists.
+        try {
+            $tokenPayload = User::jwtDecode($user->getApiToken());
+        } catch (JsonException $e) {
+            throw new CustomUserMessageAuthenticationException("Сервис временно недоступен, повторите запрос позже.");
+        }
+
+        $tokenExpiredTime = (new DateTime())->setTimestamp($tokenPayload['exp'] + 10);
+
+        if ($tokenExpiredTime <= new DateTime()) {
+            $tokens = null;
+            try {
+                $tokens = $this->billingClient->refreshToken($user->getRefreshToken());
+            } catch (BillingUnavailableException | JsonException $e) {
+                throw new CustomUserMessageAuthenticationException("Сервис временно недоступен, повторите запрос позже.");
+            }
+            $user->setApiToken($tokens['token'])
+                ->setRefreshToken($tokens['refresh_token']);
+        }
         return $user;
     }
 

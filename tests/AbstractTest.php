@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests;
 
+use App\Service\BillingClient;
 use App\Tests\Mock\BillingMock;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Loader;
@@ -23,6 +24,7 @@ abstract class AbstractTest extends WebTestCase
         if (!static::$client || $reinitialize) {
             static::$client = static::createClient($options, $server);
             static::$client->disableReboot();
+            
             static::$client->getContainer()->set(
                 'App\Service\BillingClient',
                 new BillingMock()

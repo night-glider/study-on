@@ -6,21 +6,41 @@ use App\Entity\Lesson;
 use App\Form\LessonType;
 use App\Repository\CourseRepository;
 use App\Repository\LessonRepository;
+use App\Service\BillingClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Security;
 
 /**
  * @Route("/lessons")
  */
 class LessonController extends AbstractController
 {
+
+    private BillingClient $billingClient;
+    private Security $security;
+
+    public function __construct(BillingClient $billingClient, Security $security)
+    {
+        $this->billingClient = $billingClient;
+        $this->security = $security;
+    }
     /**
      * @Route("/{id}", name="app_lesson_show", methods={"GET"})
      */
     public function show(Lesson $lesson): Response
     {
+        $user = $this->security->getUser();
+        $transactions = $this->billingClient->getTransactions($user->getApiToken(), 0, $lesson->getCourse()->getCode(), true);
+        if (!($transactions)) {
+            if (!in_array("ROLE_SUPER_ADMIN", $user->getRoles())) {
+                throw new AccessDeniedException();
+            }
+        }
+
         return $this->render('lesson/show.html.twig', [
             'lesson' => $lesson,
         ]);

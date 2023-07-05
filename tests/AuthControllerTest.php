@@ -40,6 +40,7 @@ class AuthControllerTest extends AbstractTest
         ]);
         $client->submit($login);
         $this->assertResponseRedirect();
+
     }
 
     public function testSuccessfulRegister(): void

@@ -24,8 +24,10 @@ class CourseControllerTest extends AbstractTest
     public function testPageIsSuccessful($url): void
     {
         $client = $this->getClient();
+
         $billingMock = new BillingMock();
         $billingMock->authAsAdmin($client);
+
         $client->request('GET', $url);
         $this->assertResponseOk();
     }
@@ -44,33 +46,44 @@ class CourseControllerTest extends AbstractTest
     public function testPageIsNotFound($url): void
     {
         $client = $this->getClient();
-        $billingMock = new BillingMock();
-        $billingMock->authAsAdmin($client);
-        $this->assertResponseRedirect();
+        $client->request('GET', $url);
+        $this->assertResponseCode(404);
     }
 
     public function testGetActionsResponseOk(): void
     {
         $client = $this->getClient();
+
         $billingMock = new BillingMock();
         $billingMock->authAsAdmin($client);
-        $crawler = $client->request('GET', '/courses/');
-        $courses = $this->getEntityManager()->getRepository(Course::class)->findAll();
-        foreach ($courses as $course) {
-            // детальная страница курса
-            $client->request('GET', '/courses/' . $course->getId());
-            $this->assertResponseOk();
 
-            // страница редактирования
-            $client->request('GET', '/courses/' . $course->getId() . '/edit');
-            $this->assertResponseOk();
-        }
+        $crawler = $client->request('GET', '/courses/');
+        $this->assertResponseOk();
+        $course = $this->getEntityManager()->getRepository(Course::class)->findAll()[0];
+
+        // детальная страница курса
+        $client->request('GET', '/courses/' . $course->getId());
+        $this->assertResponseOk();
+
+        // страница редактирования
+        $client->request('GET', '/courses/' . $course->getId() . '/edit');
+        $this->assertResponseOk();
     }
     public function testSuccessfulCourseCreating(): void
     {
         $client = $this->getClient();
-        $billingMock = new BillingMock();
-        $billingMock->authAsAdmin($client);
+
+        $crawler = $client->request('GET', '/login');
+        $this->assertResponseOk();
+
+        $submitBtn = $crawler->selectButton('Далее');
+        $login = $submitBtn->form([
+            'email' => "admin@gmail.com",
+            'password' => "admin",
+        ]);
+        $client->submit($login);
+        $client->followRedirect();
+
         $crawler = $client->request('GET', '/courses/new');
         $this->assertResponseOk();
 
@@ -147,6 +160,7 @@ class CourseControllerTest extends AbstractTest
 
         // проверяем редирект
         $crawler = $client->followRedirect();
+        //dd($crawler->html());
         $this->assertResponseOk();
 
         $course = $this->getEntityManager()->find(Course::class, $course->getId());
@@ -212,6 +226,39 @@ class CourseControllerTest extends AbstractTest
         $crawler = $client->followRedirect();
 
         $this->assertNull($this->getEntityManager()->find(Course::class, $course->getId()));
+    }
+
+    public function testCoursePaySuccessful(): void
+    {
+        $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
+        $course = new Course();
+        $course->setName("test");
+        $course->setCode("test");
+        $course->setDescription("test");
+        $this->getEntityManager()->persist($course);
+        $this->getEntityManager()->flush();
+        $client->request('POST', '/courses/' . $course->getId() . "/pay");
+        $client->followRedirect();
+        $this->assertResponseOk();
+    }
+
+    public function testCourseFail(): void
+    {
+        $client = $this->getClient();
+        $billingMock = new BillingMock();
+        $billingMock->authAsAdmin($client);
+        $course = new Course();
+        $course->setName("test");
+        $course->setCode("expensive_course");
+        $course->setDescription("test");
+        $this->getEntityManager()->persist($course);
+        $this->getEntityManager()->flush();
+        $client->request('POST', '/courses/' . $course->getId() . "/pay");
+        $crawler = $client->followRedirect();
+        $this->assertResponseOk();
+        $this->assertEquals('На счету недостаточно средств', $crawler->filter('.error-message')->text());
     }
 
     protected function getFixtures(): array

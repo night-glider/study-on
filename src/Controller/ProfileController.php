@@ -30,4 +30,19 @@ class ProfileController extends AbstractController
             'user' => $user,
         ]);
     }
+
+    /**
+     * @Route("/profile/transactions", name="app_profile_transactions")
+     */
+    public function transactions(): Response
+    {
+        $user = $this->billingClient->getCurrentUser($this->getUser()->getApiToken());
+        $transactions = array_reverse($this->billingClient->getTransactions($this->getUser()->getApiToken()));
+
+
+        return $this->render('profile/transactions.html.twig', [
+            'user' => $user,
+            'transactions' => $transactions
+        ]);
+    }
 }

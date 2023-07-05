@@ -13,6 +13,8 @@ class User implements UserInterface
 
     private $apiToken;
 
+    private $refreshToken;
+
     public function getEmail(): ?string
     {
         return $this->email;
@@ -84,6 +86,18 @@ class User implements UserInterface
         return $this;
     }
 
+    public function getRefreshToken(): ?string
+    {
+        return $this->refreshToken;
+    }
+
+    public function setRefreshToken(string $token): self
+    {
+        $this->refreshToken = $token;
+
+        return $this;
+    }
+
     /**
      * This method can be removed in Symfony 6.0 - is not needed for apps that do not check user passwords.
      *
@@ -108,5 +122,12 @@ class User implements UserInterface
         return (new self())
             ->setEmail($userDto->getUsername())
             ->setRoles($userDto->getRoles());
+    }
+
+    public static function jwtDecode(string $token): array
+    {
+        $tokenPayload = explode('.', $token);
+        $payload = json_decode(base64_decode($tokenPayload[1]), true, 512, JSON_THROW_ON_ERROR);
+        return $payload;
     }
 }
